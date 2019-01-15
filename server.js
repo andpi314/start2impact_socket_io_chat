@@ -43,8 +43,8 @@ io.on('connection', function(socket){
   })
 });
 
-http.listen(14234, function(){
-  console.log('listen on *:14234');
+http.listen(8080, function(){
+  console.log('listen on *:8080');
 });
 
 /*
