@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<!-- This project has been created by Andrea Provino
+     as start2impact node js chat app example
+                                                     -->
+  <head>
+    <!-- here meta information -->
+    <meta charset = "utf-8">
+    <meta name = "viewport" content = "width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv = "x-ua-compatible" content = "ie-edge">
+    <!-- title of the page -->
+    <title>Socket.io</title>
+    <!-- this is a custom icon -->
+    <link rel = "shortcut icon" type  = "image/png" href = "https://img.icons8.com/dusk/64/000000/sent.png">
+    <!-- all this file and resources are used as css reference -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css">
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Design Bootstrap -->
+    <link href="css/mdb.min.css" rel="stylesheet">
+    <!-- this is my own css -->
+    <style>
+    .full-h{
+      height: 100%;
+    }
+    .full-w{
+      width: 100%;
+    }
+    .custom-background{
+      background-image: linear-gradient(to right,#00A8B5,#1A193A);
+    }
+    hr{
+      height: 1px;
+      border-radius: .25rem;
+      background-image: linear-gradient(to right,#00A8B5,#1A193A);
+    }
+    .md-form textarea.md-textarea:focus{
+      border-bottom: none;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+      border-radius: .25rem;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+      background: #00A8B5;
+      border-radius: .25rem;
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+      background: #FFF;
+      border-radius: .25rem;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+      background: #FFf;
+    }
+    /*
+    background-image: linear-gradient(to right,#00A8B5,#1A193A);
+    light blue (1) : #00A8B5
+    dark blue  (2) : #1A193A
+    light grey (3) : #CECECE
+    dark grey  (4) : #2C2C2C
+    */
+
+    </style>
+  </head>
+  <script src = "/socket.io/socket.io.js"></script>
+  <script src="js/jquery-3.3.1.min.js"></script>
+  <script>
+  var ready;
+    $(function (){
+      var socket = io();
+      $('#send').click(function(){
+        if(ready){
+          var msg = $('#input_message').val();
+          var name = $('#nickname').val();
+          socket.emit('send', msg, name);
+          $('#input_message').val('');
+          console.log("message sent: "+msg);
+        }else{
+          $('#login-modal').modal('show');
+        }
+      })
+      $('#login').click(function(){
+        var name = $('#nickname').val();
+        $('#login-modal').modal('hide');
+        if(name != ''){
+          console.log("name: "+name);
+          socket.emit('join', name);
+          document.getElementById('send').innerHTML = 'Send';
+          document.getElementById('label_message').innerHTML = 'Your message';
+          document.getElementById('input_message').classList.remove('disabled');
+          ready = true;
+        }
+      });
+      $('#input_message').keypress(function(e){
+        var name = $('#nickname').val();
+        if(e.which == 13){
+          var msg = $('#input_message').val();
+          socket.emit('send', msg, name);
+          $('#input_message').val('');
+        }
+        socket.emit('typing', name);
+        //is typing function;
+      });
+      socket.on('typing-form', function(name){
+        document.getElementById('user_typing').innerHTML = '<span  class="badge m-2 badge-pill custom-background text-left ">'+name+'</span>';
+      });
+      socket.on('update', function(msg, ext_user_name){
+        document.getElementById('user_typing').innerHTML = '';
+        var message = '<p class = "card-text"> '+ext_user_name+' : '+msg;
+        console.log(message);
+        $('#chat-messages').append(message);
+      });
+      socket.on('com', function(msg){
+        $('#chat-messages').append($('<p class = "card-text text-right"><strong>').text(msg));
+      });
+      socket.on('private', function(msg){
+        $('#chat-messages').append($('<p class = "card-text text-right">').text(msg));
+      });
+      socket.on('update-people', function(people){
+        if(ready){
+          $('#people').empty();
+          $.each(people, function(clientid, name){
+            $('#people').append($('<p class = "card-text text-center">').text(name));
+          });
+        }
+      });
+      socket.on('disconnect', function(){
+        document.getElementById('label_message').innerHTML = 'The server is not available';
+        document.getElementById('input_message').classList.addclass = 'disabled';
+        document.getElementById('send').classList.addclass = 'disabled';
+      });
+    });
+  </script>
+  <body class = "d-flex align-items-center justify-content-center">
+    <header>
+    </header>
+    <main class = "container">
+      <!-- login modal -->
+      <div class="modal fade" id="login-modal" >
+        <div class="modal-dialog cascading-modal modal-dialog-centered modal-avatar modal-sm" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <img src="https://picsum.photos/300/300?random" class="rounded-circle img-responsive" alt="Avatar photo">
+            </div>
+            <div class="modal-body text-center mb-1">
+              <h5 class="mt-1 mb-2">New User</h5>
+
+              <div class="md-form">
+                <input type="text" id="nickname" class="form-control">
+                <label for="nickname">Enter nickname</label>
+              </div>
+
+              <div class="text-center mt-4">
+                <button id = "login" type = "button" class="btn btn-large btn-rounded waves-effect waves-light custom-background">Login
+                  <i class="fas fa-sign-in-alt ml-1 text-white"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+      <div class = "row">
+        <div class ="col-12">
+          <div class = "row" style = "margin-bottom: 10%; margin-top: 10%;">
+            <div class = "col-lg-8 col-md-12 col-12 container">
+              <ul class="nav nav-tabs md-tabs nav-justified" style="background-image: linear-gradient(to right,#00A8B5,#1A193A);" role="tablist">
+                  <li class="nav-item waves-effect waves-light">
+                    <a class="nav-link active text-uppercase" data-toggle="tab" href="#chat" role="tab">
+                    <i class="pr-2"></i>Chat</a>
+                  </li>
+                  <li class="nav-item waves-effect waves-light">
+                    <a class="nav-link text-uppercase" data-toggle="tab" href="#users" role="tab">
+                    <i class="pr-2"></i>Users</a>
+                  </li>
+                </ul>
+            </div>
+          </div>
+          <div class = "tab-content">
+            <div class = "tab-pane fade in show active" id = "chat" role = "tabpanel">
+              <div class = "row p2-2 my-2">
+                <div class = "my-2 col-lg-12 col-md-12 col-12 d-flex align-items-center justify-content-center">
+                  <!-- Card -->
+                  <div class="card card-cascade narrower" style = "width: 600px;" >
+                      <div class="view view-cascade gradient-card-header custom-background">
+                        <!-- Title -->
+                        <h2 class="card-header-title">Elegant Star2Impact <strong>chat</strong></h2>
+                        <!-- Subtitle -->
+                        <h5 class="mb-0 pb-3 pt-2">Start typing and change the world</h5>
+                      </div>
+                      <div class="card-body card-body-cascade" >
+                        <div class = "p-2" id = "chat-messages" style = " overflow-y: scroll; max-height: 400px;">
+
+                        </div>
+                        <hr/>
+                        <div class = "row pt-1">
+                          <div class = "col-8">
+                            <div class="md-form">
+                              <input type="text" id="input_message" class="disabled form-control">
+                              <label id = "label_message" for="form1">Login to start sending</label>
+                            </div>
+                          </div>
+                          <div class = "col-4 py-2 text-center">
+                            <button type = "button" id="send" class = "btn btn-rounded custom-background">Login</button>
+                          </div>
+                        </div>
+                      </div>
+                      <p id = "user_typing" class = "p-2 m-2">
+                      </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class = "tab-pane fade" id = "users" role = "tabpanel">
+              <div class = "row p2-2 my-2">
+                <div class = "my-2 col-lg-12 col-md-12 col-12 d-flex align-items-center justify-content-center">
+                  <!-- Card -->
+                  <div class="card card-cascade narrower" style = "width: 600px;">
+                      <div class="view view-cascade gradient-card-header custom-background">
+                        <!-- Title -->
+                        <h2 class="card-header-title">Start2Impact <strong>Users</strong></h2>
+                        <!-- Subtitle -->
+                        <h5 class="mb-0 pb-3 pt-2">Now online</h5>
+                      </div>
+                      <div  id = "people" class="card-body card-body-cascade" style = " overflow-y: scroll; max-height: 400px;">
+
+                      </div>
+
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </main>
+    <footer>
+
+    </footer>
+    <!-- JQuery -->
+
+    <!-- Bootstrap tooltips -->
+    <script type="text/javascript" src="js/popper.min.js"></script>
+    <!-- Bootstrap core JavaScript -->
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <!-- MDB core JavaScript -->
+    <script type="text/javascript" src="js/mdb.min.js"></script>
+    <!-- these are my own scripts -->
+    <script type="text/javascript">
+
+    </script>
+  </body>
+</html>
